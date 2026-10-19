@@ -32,7 +32,9 @@ A REST API for creating and managing notes using Node.js, Express, MongoDB, and 
 
 3. Create a `.env` file in the project root:
 
-   `PORT=5000MONGODB_URI=your_mongodb_connection_string``NODE_ENV=development`
+   PORT=5000
+   MONGODB_URI=your_mongodb_connection_string
+   NODE_ENV=development
 
 4. Start the development server:
 
