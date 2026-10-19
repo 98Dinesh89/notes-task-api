@@ -15,12 +15,81 @@ export const createNote = async (req, res, next) => {
 
 export const getNotes = async (req, res, next) => {
     try {
-        const notes = await Note.find();
+        const {
+            completed,
+            sortBy = "createdAt",
+            order = "desc",
+            page = "1",
+            limit = "10",
+        } = req.query;
+
+        const filter = {};
+
+        if (completed !== undefined) {
+            if (completed !== "true" && completed !== "false") {
+                return res.status(400).json({
+                    success: false,
+                    message: "completed must be true or false"
+                });
+            }
+
+            filter.completed = completed === "true";
+        }
+
+        const allowedSortFields = ["title", "createdAt", "updatedAt"];
+        if (!allowedSortFields.includes(sortBy)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid sortBy field"
+            });
+        }
+
+        if (!["asc", "desc"].includes(order)) {
+            return res.status(400).json({
+                success: false,
+                message: "order must be asc or desc"
+            });
+        }
+
+        const pageNumber = Number(page);
+        const pageSize = Number(limit);
+
+        if (
+            !Number.isInteger(pageNumber) ||
+            !Number.isInteger(pageSize) ||
+            pageNumber < 1 ||
+            pageSize < 1 ||
+            pageSize > 100
+        ) {
+            return res.status(400).json({
+                succes: false,
+                message: "page must be positive and limit must be between 1 and 100",
+            });
+        }
+
+        const sortOptions = {
+            [sortBy]: order === "asc" ? 1 : -1,
+        };
+
+        const skip = (pageNumber - 1) * pageSize;
+
+        const [notes, totalItems] = await Promise.all([
+            Note.find(filter)
+                .sort(sortOptions)
+                .skip(skip)
+                .limit(pageSize),
+            Note.countDocuments(filter)
+        ]);
 
         res.status(200).json({
-            succes: true,
-            count: notes.length,
+            sunccess: true,
             data: notes,
+            pagination: {
+                page: pageNumber,
+                limit: pageSize,
+                totalItems,
+                totalPages: Math.ceil(totalItems / pageSize)
+            }
         });
     } catch (error) {
         next(error);

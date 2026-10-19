@@ -3,7 +3,7 @@ import { body, param } from "express-validator";
 export const createNoteValidator = [
     body("title")
         .isString()
-        .withMessage("Title must be a string")
+        .withMessage("Title must be a string and is required")
         .bail()
         .trim()
         .notEmpty()
@@ -11,7 +11,7 @@ export const createNoteValidator = [
 
     body("content")
         .isString()
-        .withMessage("Content must be a string")
+        .withMessage("Content must be a string and is required")
         .bail()
         .trim()
         .notEmpty()
@@ -21,6 +21,19 @@ export const createNoteValidator = [
         .optional()
         .isBoolean()
         .withMessage("Completed must be a boolena"),
+
+    body().custom((value) => {
+        const allowedFields = ["title", "completed", "content"];
+        const invalidFields = Object.keys(value || {}).filter(
+            (key) => !allowedFields.includes(key)
+        );
+
+        if (invalidFields.length > 0) {
+            throw new Error(`Unsupported fields : ${invalidFields.join(", ")}`);
+        }
+
+        return true;
+    })
 ];
 
 export const noteIdValidator = [
